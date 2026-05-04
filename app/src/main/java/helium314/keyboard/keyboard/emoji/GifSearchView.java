@@ -128,6 +128,10 @@ public class GifSearchView extends LinearLayout {
     // Whether the current editor supports image/gif via commitContent
     private boolean editorSupportsGif = true; // optimistic default until checked
     private boolean editorIsWhatsApp = false; // set by updateEditorSupport
+    // Loading / empty state views
+    private View loadingContainer;
+    private View emptyContainer;
+    private android.widget.TextView emptyText;
     // Helpers for editing state
     public boolean hasResults() {
         return adapter != null && adapter.getItemCount() > 0;
@@ -174,8 +178,29 @@ public class GifSearchView extends LinearLayout {
     private android.view.ViewGroup suggestionsChips;
     private android.view.View suggestionsScroll;
 
-    private void refreshSuggestionsUi() {
-        if (suggestionsChips == null || suggestionsScroll == null) return;
+    /** Show spinner, hide grid and empty state. */
+    private void showLoading() {
+        if (grid != null) grid.setVisibility(View.GONE);
+        if (loadingContainer != null) loadingContainer.setVisibility(View.VISIBLE);
+        if (emptyContainer != null) emptyContainer.setVisibility(View.GONE);
+    }
+
+    /** Show grid, hide spinner and empty state. */
+    private void showResults() {
+        if (grid != null) grid.setVisibility(View.VISIBLE);
+        if (loadingContainer != null) loadingContainer.setVisibility(View.GONE);
+        if (emptyContainer != null) emptyContainer.setVisibility(View.GONE);
+    }
+
+    /** Show empty state message, hide grid and spinner. */
+    private void showEmpty(String message) {
+        if (grid != null) grid.setVisibility(View.GONE);
+        if (loadingContainer != null) loadingContainer.setVisibility(View.GONE);
+        if (emptyContainer != null) emptyContainer.setVisibility(View.VISIBLE);
+        if (emptyText != null && message != null) emptyText.setText(message);
+    }
+
+    private void refreshSuggestionsUi() {        if (suggestionsChips == null || suggestionsScroll == null) return;
         boolean hasQuery = queryField != null
                 && queryField.getText() != null
                 && queryField.getText().length() > 0;
@@ -261,6 +286,11 @@ public class GifSearchView extends LinearLayout {
         // ── Suggestion chips ───────────────────────────────────────────────
         suggestionsScroll = findViewById(R.id.gif_suggestions_scroll);
         suggestionsChips  = findViewById(R.id.gif_suggestions_chips);
+
+        // ── Loading / empty state ──────────────────────────────────────────
+        loadingContainer = findViewById(R.id.gif_loading_container);
+        emptyContainer   = findViewById(R.id.gif_empty_container);
+        emptyText        = findViewById(R.id.gif_empty_text);
 
         // ── Query field text watcher ───────────────────────────────────────
         queryField.addTextChangedListener(new android.text.TextWatcher() {
@@ -451,6 +481,7 @@ public class GifSearchView extends LinearLayout {
         nextPos = null;
         adapter.setItems(Collections.emptyList());
         adapter.notifyDataSetChanged();
+        showLoading();
         new FetchGifTask().execute(query);
     }
     /**
@@ -539,7 +570,12 @@ public class GifSearchView extends LinearLayout {
                 adapter.setItems(Collections.emptyList());
                 adapter.notifyDataSetChanged();
             }
-            if (grid != null) grid.scrollToPosition(0);
+            if (grid != null) {
+                grid.scrollToPosition(0);
+                grid.setVisibility(View.VISIBLE);
+            }
+            if (loadingContainer != null) loadingContainer.setVisibility(View.GONE);
+            if (emptyContainer != null) emptyContainer.setVisibility(View.GONE);
             if (actionsListener != null) actionsListener.onGifEditingStateChanged(true);
             refreshSuggestionsUi();
         } catch (Throwable t) {
@@ -669,6 +705,10 @@ public class GifSearchView extends LinearLayout {
             isLoading = false;
             if (items == null || items.isEmpty()) {
                 hasMore = false;
+                if (!isLoadMore) {
+                    // First page returned nothing — show empty state
+                    showEmpty(getContext().getString(R.string.gif_no_results));
+                }
                 return;
             }
             if (isLoadMore) {
@@ -677,10 +717,10 @@ public class GifSearchView extends LinearLayout {
                 adapter.appendItems(items);
                 adapter.notifyItemRangeInserted(start, items.size());
             } else {
-                // First page — notify results visible (this triggers setUiMode(GIF) in LatinIME
-                // which hides the keyboard; no need to call onGifEditingStateChanged separately)
+                // First page — show results
                 adapter.setItems(items);
                 adapter.notifyDataSetChanged();
+                showResults();
                 if (actionsListener != null) actionsListener.onGifResultsVisible();
             }
         }

@@ -15,3 +15,4 @@ tools/*.txt
 .kiro/*
 release_build.log
 expressly.jks
+debug_build.log

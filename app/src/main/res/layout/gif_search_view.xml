@@ -94,4 +94,45 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+    <!-- ── Loading spinner (shown while search is in progress) ── -->
+    <FrameLayout
+        android:id="@+id/gif_loading_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/gif_loading_spinner"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/gif_icon_tint" />
+
+    </FrameLayout>
+
+    <!-- ── Empty state (shown when search returns no results) ── -->
+    <FrameLayout
+        android:id="@+id/gif_empty_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/gif_empty_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/gif_no_results"
+            android:textColor="@color/gif_search_hint"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:padding="16dp" />
+
+    </FrameLayout>
+
 </LinearLayout>
